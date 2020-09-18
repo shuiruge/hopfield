@@ -8,10 +8,12 @@ __all__ = (
     'DenseRecon',
     'ModernDenseRecon',
     'Conv2dRecon',
+    'sign',
 )
 
 
 def sign(x):
+    """Return -1 if x > 0 else 1 element-wisely, with dtype conserved."""
     y = tf.where(x > 0, 1, -1)
     y = tf.cast(y, x.dtype)
     return y
@@ -31,35 +33,37 @@ class DenseRecon(NonidentityRecon):
     binarize: callable, optional
         Binarization method for non-training process. If `None`, then no
         binarization.
-    use_bias : bool, optional
-        For simplicity, bias is not employed by default.
     """
 
     def __init__(self,
                  activation,
                  binarize=None,
-                 use_bias=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.activation = activation
         self.binarize = binarize
-        self.use_bias = use_bias
 
     def build(self, input_shape):
         depth = input_shape[-1]
-        self._recon = tf.keras.layers.Dense(
-            units=depth,
-            activation=self.activation,
-            use_bias=self.use_bias,
-            kernel_constraint=symmetrize_and_mask_diagonal,
-        )
+        self.kernel = self.add_weight(
+            name='kernel',
+            shape=[depth, depth],
+            initializer="glorot_uniform",
+            constraint=symmetrize_and_mask_diagonal,
+            trainable=True)
+        self.bias = self.add_weight(
+            name='bias',
+            shape=[depth],
+            initializer="zeros",
+            trainable=True)
         super().build(input_shape)
 
     def call(self, x, training=None):
-        y = self._recon(x)
-        if training:
-            return y
-        if self.binarize is not None:
+        W, b = self.kernel, self.bias
+        y = x @ W + b
+        if self.activation is not None:
+            y = self.activation(y)
+        if not training and self.binarize is not None:
             y = self.binarize(y)
         return y
 

@@ -27,7 +27,7 @@ class DiscreteTimeHopfieldLayer(tf.keras.layers.Layer):
     """
 
     def __init__(self,
-                 non_identity_recon: NonidentityRecon,
+                 non_identity_recon,
                  max_steps: int,
                  async_ratio=0.,
                  relax_tol=1e-3,
@@ -41,6 +41,15 @@ class DiscreteTimeHopfieldLayer(tf.keras.layers.Layer):
         self.reg_factor = float(reg_factor)
 
         self.final_step = tf.Variable(0, trainable=False)
+    
+    def get_config(self):
+        config = super().get_config()
+        config['non_identity_recon'] = self.non_identity_recon
+        config['max_steps'] = self.max_steps
+        config['async_ratio'] = self.async_ratio
+        config['relax_tol'] = self.relax_tol
+        config['reg_factor'] = self.reg_factor
+        return config
 
     def _learn(self, x):
         r = self.non_identity_recon(x, training=True)
