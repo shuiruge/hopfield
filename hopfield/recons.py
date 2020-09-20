@@ -8,15 +8,7 @@ __all__ = (
     'DenseRecon',
     'ModernDenseRecon',
     'Conv2dRecon',
-    'sign',
 )
-
-
-def sign(x):
-    """Return -1 if x > 0 else 1 element-wisely, with dtype conserved."""
-    y = tf.where(x > 0, 1, -1)
-    y = tf.cast(y, x.dtype)
-    return y
 
 
 class NonidentityRecon(tf.keras.layers.Layer):
