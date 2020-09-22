@@ -3,6 +3,7 @@ import tensorflow as tf
 __all__ = (
     'sign',
     'tempered',
+    'softly',
     'softly_binarize',
     'SoftBinarization',
     'softly_argmax',
