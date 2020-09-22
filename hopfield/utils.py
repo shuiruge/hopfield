@@ -33,6 +33,25 @@ def tempered(T, fn):
     return lambda x: fn(x / T)
 
 
+def softly(fn):
+    r"""Decorator that returns func(*x, **kwargs), with the gradients on the x
+    :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an unit Jacobian,
+    or say, an identity vector-Jacobian-product.
+    """
+
+    def identity(*dy):
+        if len(dy) == 1:
+            dy = dy[0]
+        return dy
+
+    @tf.custom_gradient
+    def softly_fn(*args, **kwargs):
+        y = fn(*args, **kwargs)
+        return y, identity
+
+    return softly_fn
+
+
 def softly_binarize(x, threshold, minval=0, maxval=1, from_logits=False):
     r"""Returns `maxval` if x > threshold else `minval`, element-wisely, with
     the gradients :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an
@@ -53,18 +72,13 @@ def softly_binarize(x, threshold, minval=0, maxval=1, from_logits=False):
         The same shape and dtype as x.
     """
 
-    @tf.custom_gradient
-    def fn(x):
-        y = tf.where(x > threshold, minval, maxval)
+    @softly
+    def binarize(x):
+        y = tf.where(x > threshold, maxval, minval)
         y = tf.cast(y, x.dtype)
-        return y, identity
+        return y
 
-    return fn(tf.nn.sigmoid(x)) if from_logits else fn(x)
-
-
-def identity(x):
-    """Identity map: x -> x."""
-    return x
+    return binarize(tf.nn.sigmoid(x)) if from_logits else binarize(x)
 
 
 class SoftBinarization(tf.keras.layers.Layer):
@@ -99,16 +113,15 @@ class SoftBinarization(tf.keras.layers.Layer):
 
 
 # TODO: test this function.
-def softly_argmax(x, axis, threshold, from_logits=False):
-    r"""Returns 1 if the element x[..., i, ...] < max(x[..., i, ...]) - T, along
-    axis i, where T is the threshold, with the gradients
+def softly_argmax(x, axis, from_logits=False):
+    r"""Returns 1 if the element x[..., i, ...] == max(x[..., i, ...]), along
+    axis i, with the gradients
     :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an unit Jacobian.
 
     Parameters
     ----------
     x : tensor
     axis : int
-    threshold : float
     from_logits : bool, optional
         If true, then softly argmax softmax(x) instead of x.
 
@@ -118,12 +131,11 @@ def softly_argmax(x, axis, threshold, from_logits=False):
         The same shape and dtype as x.
     """
 
-    @tf.custom_gradient
-    def fn(x):
-        max_x = tf.reduce_max(x, axis=axis)
-        x_threshold = max_x - threshold
-        y = tf.where(x > x_threshold, 1, 0)
+    @softly
+    def argmax(x):
+        max_x = tf.reduce_max(x, axis=axis, keepdims=True)
+        y = tf.where(x == max_x, 1, 0)
         y = tf.cast(y, x.dtype)
-        return y, identity
+        return y
 
-    return fn(tf.nn.softmax(x)) if from_logits else fn(x)
+    return argmax(tf.nn.softmax(x)) if from_logits else argmax(x)
