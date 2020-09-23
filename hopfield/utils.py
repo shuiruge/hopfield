@@ -3,6 +3,7 @@ import tensorflow as tf
 __all__ = (
     'sign',
     'tempered',
+    'SoftFunction',
     'softly',
     'softly_binarize',
     'SoftBinarization',
@@ -34,23 +35,38 @@ def tempered(T, fn):
     return lambda x: fn(x / T)
 
 
+def identity(*dy):
+    if len(dy) == 1:
+        dy = dy[0]
+    return dy
+
+
+class SoftFunction:
+    """Callable with unit Jacobian, or say, identity vector-Jacobian-product.
+
+    Parameters
+    ----------
+    hard_fn : callable
+    """
+
+    def __init__(self, hard_fn):
+        super().__init__()
+        self.hard_fn = hard_fn
+
+    @tf.custom_gradient
+    def __call__(self, *args, **kwargs):
+        y = self.hard_fn(*args, **kwargs)
+        return y, identity
+
+
 def softly(fn):
     r"""Decorator that returns func(*x, **kwargs), with the gradients on the x
     :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an unit Jacobian,
     or say, an identity vector-Jacobian-product.
     """
-
-    def identity(*dy):
-        if len(dy) == 1:
-            dy = dy[0]
-        return dy
-
-    @tf.custom_gradient
-    def softly_fn(*args, **kwargs):
-        y = fn(*args, **kwargs)
-        return y, identity
-
-    return softly_fn
+    if isinstance(fn, SoftFunction):
+        return fn
+    return SoftFunction(fn)
 
 
 def softly_binarize(x, threshold, minval=0, maxval=1, from_logits=False):

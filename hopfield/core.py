@@ -64,7 +64,7 @@ class DiscreteTimeHopfieldLayer(tf.keras.layers.Layer):
                 final_step = step
                 break
             x = next_x
-        else:
+        if final_step == 0:  # XXX: TF autograph does not support for-else.
             final_step = self.max_steps
         return x, final_step
 
