@@ -23,14 +23,13 @@
       x<rsup|\<beta\>><around*|(|t|)>+b<rsup|\<alpha\>>|)>.
     </equation*>
 
-    The <math|<around*|(|x,W,b|)>> is called a discrete-time Hopfield
-    network.
+    The <math|<around*|(|W,b|)>> is called a discrete-time Hopfield network.
   </definition>
 
   <subsubsection|Convergence>
 
   <\lemma>
-    Let <math|<around*|(|x,W,b|)>> a discrete-time Hopfield network. Define
+    Let <math|<around*|(|W,b|)>> a discrete-time Hopfield network. Define
     <math|<with|math-font|cal|E><around*|(|x|)>\<assign\>-<around*|(|1/2|)>W<rsub|\<alpha\>\<beta\>>
     x<rsup|\<alpha\>> x<rsup|\<beta\>>-b<rsub|\<alpha\>>x<rsup|\<alpha\>>>.
     Then <math|<with|math-font|cal|E><around*|(|x<around*|(|t+1|)>|)>-<with|math-font|cal|E><around*|(|x<around*|(|t|)>|)>\<leqslant\>0>.
@@ -77,7 +76,7 @@
 
   <\theorem>
     [Convergene of Discrete-time Hopfield Network] Let
-    <math|<around*|(|x,W,b|)>> a discrete-time Hopfield network. Then any
+    <math|<around*|(|W,b|)>> a discrete-time Hopfield network. Then any
     trajectory obeying the update rule will converge either to a fixed point
     or a limit circle.
   </theorem>
@@ -107,7 +106,7 @@
 
     where <math|\<tau\>\<in\><around*|(|0,+\<infty\>|)>> a constant and
     <math|f:\<bbb-R\>\<rightarrow\><around*|[|-1,1|]>> being increasing. The
-    <math|<around*|(|x,W,b;\<tau\>,f|)>> is called a continuous-time Hopfield
+    <math|<around*|(|W,b;\<tau\>,f|)>> is called a continuous-time Hopfield
     network.
   </definition>
 
@@ -133,8 +132,8 @@
   <subsubsection|Convergence>
 
   <\lemma>
-    Let <math|<around*|(|x,W,b;\<tau\>,f|)>> a continous-time Hopfield
-    network. Define <math|a<rsup|\<alpha\>>\<assign\>W<rsup|\<alpha\>><rsub|<space|2.4spc>\<beta\>>
+    Let <math|<around*|(|W,b;\<tau\>,f|)>> a continous-time Hopfield network.
+    Define <math|a<rsup|\<alpha\>>\<assign\>W<rsup|\<alpha\>><rsub|<space|2.4spc>\<beta\>>
     x<rsup|\<beta\>>+b<rsup|\<alpha\>>> and
     <math|y<rsup|\<alpha\>>\<assign\>f<around*|(|a<rsup|\<alpha\>>|)>>, then
 
@@ -180,7 +179,7 @@
 
   <\theorem>
     [Convergene of Continuous-time Hopfield Network] Let
-    <math|<around*|(|x,W,b;\<tau\>,f|)>> a continous-time Hopfield network.
+    <math|<around*|(|W,b;\<tau\>,f|)>> a continous-time Hopfield network.
     Then any trajectory along the dynamics will converge either to a fixed
     point or a limit circle.
   </theorem>
@@ -195,8 +194,8 @@
   <subsubsection|Learning Rule>
 
   <\corollary>
-    Let <math|<around*|(|x,W,b;\<tau\>,f|)>> a continous-time Hopfield
-    network. And <math|D\<assign\><around*|{|x<rsub|n>\|x<rsub|n>\<in\>\<bbb-R\><rsup|d>,n=1,\<ldots\>,N|}>>
+    Let <math|<around*|(|W,b;\<tau\>,f|)>> a continous-time Hopfield network.
+    And <math|D\<assign\><around*|{|x<rsub|n>\|x<rsub|n>\<in\>\<bbb-R\><rsup|d>,n=1,\<ldots\>,N|}>>
     a dataset<\footnote>
       We use Greek alphabet for component in <math|\<bbb-R\><rsup|d>> and
       Lattin alphabet for element in dataset.
@@ -417,6 +416,48 @@
 
   TODO
 
+  <subsection|Relation to Restricted Boltzmann Machine and Low-Density
+  Parity-Check Code>
+
+  <\definition>
+    <label|Boltzmann machine and low-density parity-check decoder>[Boltzmann
+    Machine & Low-Density Parity-Check Decoder] Let
+    <math|W\<in\>\<bbb-R\><rsup|L>\<times\>\<bbb-R\><rsup|A>>, with
+    <math|L\<less\>A>, <math|b\<in\>\<bbb-R\><rsup|A>>, and
+    <math|v\<in\>\<bbb-R\><rsup|L>>. For <math|\<forall\>x\<in\><around*|{|-1,+1|}><rsup|A>>,
+    define updation rule
+
+    <\align>
+      <tformat|<table|<row|<cell|z<rsub|t+1>>|<cell|=sign<around*|[|W\<cdot\>x<rsub|t>+b|]>;>>|<row|<cell|x<rsub|t+1>>|<cell|=sign<around*|[|W<rsup|T>\<cdot\>z<rsub|t+1>+v|]>.>>>>
+    </align>
+
+    We call <math|<around*|(|W,b,v|)>> with this updation rule a Boltzmann
+    machine (or low-density parity-check decoder).
+  </definition>
+
+  <\theorem>
+    Boltzmann machine is a special case of discrete-time Hopfield network.
+    This, thus, ensures the convergence of Boltzmann machine.
+  </theorem>
+
+  <\proof>
+    Define <math|y\<assign\><around*|(|z<rsub|1>,\<ldots\>,z<rsub|L>,x<rsub|1>,\<ldots\>,x<rsub|A>|)>\<in\>\<bbb-R\><rsup|L+A>>,
+    <math|h\<assign\><around*|(|b<rsub|1>,\<ldots\>,b<rsub|L>,v<rsub|1>,\<ldots\>,v<rsub|A>|)>>,
+    and
+
+    <\equation*>
+      U\<assign\><matrix|<tformat|<table|<row|<cell|<with|math-font|Bbb*|0><rsub|1>>|<cell|W<rsup|T>>>|<row|<cell|W>|<cell|<with|math-font|Bbb*|0><rsub|2>>>>>>,
+    </equation*>
+
+    where <math|<with|math-font|Bbb*|0><rsub|1>\<in\>\<bbb-R\><rsup|A>\<times\>\<bbb-R\><rsup|A>>,
+    <math|<with|math-font|Bbb*|0><rsub|2>\<in\>\<bbb-R\><rsup|L>\<times\>\<bbb-R\><rsup|L>>
+    are zero matrices. Then we have <math|U<rsub|\<alpha\>\<beta\>>=U<rsub|\<beta\>\<alpha\>>>
+    and <math|U<rsub|\<alpha\>\<alpha\>>=0> for
+    <math|\<forall\>\<alpha\>,\<beta\>>, and the updation rule can be viewed
+    as an async-updation of Hopfield network <math|<around*|(|U,h|)>>, which
+    updates the first <math|L> components at each step of updation.
+  </proof>
+
   <section|References>
 
   <\enumerate-numeric>
@@ -433,101 +474,92 @@
 
 <\references>
   <\collection>
-    <associate|Hopfield networks is All You
-    Need|<tuple|2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|On autoencoder scoring|<tuple|1|?|../../neural-ode/docs/neural
-    ode.tm>>
-    <associate|adjoint method|<tuple|1|1|../../neural-ode/docs/neural
-    ode.tm>>
-    <associate|auto-1|<tuple|1|1|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-10|<tuple|1.2.5|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-11|<tuple|2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-12|<tuple|2.1|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-13|<tuple|2.2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-14|<tuple|3|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-15|<tuple|2.1|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-16|<tuple|3|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-2|<tuple|1.1|2|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-3|<tuple|1.1.1|2|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-4|<tuple|1.1.2|2|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-5|<tuple|1.2|3|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-6|<tuple|1.2.1|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-7|<tuple|1.2.2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-8|<tuple|1.2.3|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|auto-9|<tuple|1.2.4|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|example: softmax|<tuple|14|?|../../neural-ode/docs/neural
-    ode.tm>>
-    <associate|footnote-1|<tuple|1|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|footnote-2|<tuple|2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|footnr-1|<tuple|1|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|footnr-2|<tuple|2|?|../../neural-ode/docs/neural ode.tm>>
-    <associate|modern-hopfield-networks-aka-dense-associative-memories|<tuple|2.1|?|../../neural-ode/docs/neural
-    ode.tm>>
+    <associate|Boltzmann machine|<tuple|16|?>>
+    <associate|Boltzmann machine and low-density parity-check
+    decoder|<tuple|16|?>>
+    <associate|Hopfield networks is All You Need|<tuple|2|?>>
+    <associate|On autoencoder scoring|<tuple|1|?>>
+    <associate|auto-1|<tuple|1|1>>
+    <associate|auto-10|<tuple|1.2.5|?>>
+    <associate|auto-11|<tuple|2|?>>
+    <associate|auto-12|<tuple|2.1|?>>
+    <associate|auto-13|<tuple|2.2|?>>
+    <associate|auto-14|<tuple|2.3|?>>
+    <associate|auto-15|<tuple|3|?>>
+    <associate|auto-2|<tuple|1.1|2>>
+    <associate|auto-3|<tuple|1.1.1|2>>
+    <associate|auto-4|<tuple|1.1.2|2>>
+    <associate|auto-5|<tuple|1.2|3>>
+    <associate|auto-6|<tuple|1.2.1|?>>
+    <associate|auto-7|<tuple|1.2.2|?>>
+    <associate|auto-8|<tuple|1.2.3|?>>
+    <associate|auto-9|<tuple|1.2.4|?>>
+    <associate|example: softmax|<tuple|14|?>>
+    <associate|footnote-1|<tuple|1|?>>
+    <associate|footnote-2|<tuple|2|?>>
+    <associate|footnr-1|<tuple|1|?>>
+    <associate|footnr-2|<tuple|2|?>>
   </collection>
 </references>
 
 <\auxiliary>
   <\collection>
     <\associate|toc>
-      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|1<space|2spc>Neural
-      ODE> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|1<space|2spc>Hopfield
+      Network> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-1><vspace|0.5fn>
 
-      <with|par-left|<quote|1tab>|1.1<space|2spc>Adjoint Method
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|1.1<space|2spc>Discrete-time Hopfield
+      Network <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-2>>
 
-      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|2<space|2spc>Hopfield
-      Network> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-3><vspace|0.5fn>
+      <with|par-left|<quote|2tab>|1.1.1<space|2spc>Definition
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-3>>
 
-      <with|par-left|<quote|1tab>|2.1<space|2spc>Discrete-time Hopfield
-      Network <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|2tab>|1.1.2<space|2spc>Convergence
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-4>>
 
-      <with|par-left|<quote|2tab>|2.1.1<space|2spc>Definition
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|1.2<space|2spc>Continuous-time Hopfield
+      Network <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-5>>
 
-      <with|par-left|<quote|2tab>|2.1.2<space|2spc>Convergence
+      <with|par-left|<quote|2tab>|1.2.1<space|2spc>Definition
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-6>>
 
-      <with|par-left|<quote|1tab>|2.2<space|2spc>Continuous-time Hopfield
-      Network <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|2tab>|1.2.2<space|2spc>Convergence
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-7>>
 
-      <with|par-left|<quote|2tab>|2.2.1<space|2spc>Definition
+      <with|par-left|<quote|2tab>|1.2.3<space|2spc>Learning Rule
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-8>>
 
-      <with|par-left|<quote|2tab>|2.2.2<space|2spc>Convergence
+      <with|par-left|<quote|2tab>|1.2.4<space|2spc>Relation to Auto-encoder
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-9>>
 
-      <with|par-left|<quote|2tab>|2.2.3<space|2spc>Learning Rule
+      <with|par-left|<quote|2tab>|1.2.5<space|2spc>Stability of Fixed Points
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-10>>
 
-      <with|par-left|<quote|2tab>|2.2.4<space|2spc>Relation to Auto-encoder
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|2<space|2spc>Variations>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-11>>
+      <no-break><pageref|auto-11><vspace|0.5fn>
 
-      <with|par-left|<quote|2tab>|2.2.5<space|2spc>Stability of Fixed Points
+      <with|par-left|<quote|1tab>|2.1<space|2spc>Dense Associative Memories
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-12>>
 
-      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|3<space|2spc>Variations>
+      <with|par-left|<quote|1tab>|2.2<space|2spc>Cellular Automa
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-13><vspace|0.5fn>
+      <no-break><pageref|auto-13>>
 
-      <with|par-left|<quote|1tab>|3.1<space|2spc>Variation 1
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|3<space|2spc>References>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-14>>
-
-      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|4<space|2spc>References>
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-15><vspace|0.5fn>
+      <no-break><pageref|auto-14><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
