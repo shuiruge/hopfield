@@ -35,12 +35,6 @@ def tempered(T, fn):
     return lambda x: fn(x / T)
 
 
-def identity(*dy):
-    if len(dy) == 1:
-        dy = dy[0]
-    return dy
-
-
 class SoftFunction:
     """Callable with unit Jacobian, or say, identity vector-Jacobian-product.
 
@@ -57,6 +51,11 @@ class SoftFunction:
     def __call__(self, *args, **kwargs):
         y = self.hard_fn(*args, **kwargs)
         return y, identity
+
+
+def identity(*x):
+    """Identity map. That is, x -> x."""
+    return x[0] if len(x) == 1 else x
 
 
 def softly(fn):

@@ -2,14 +2,12 @@
 
 import numpy as np
 import tensorflow as tf
-from hopfield.utils import softly
 
 __all__ = (
     'NonidentityRecon',
     'DenseRecon',
     'ModernDenseRecon',
     'Conv2dRecon',
-    'LatentDenseRecon',
 )
 
 
@@ -223,38 +221,3 @@ def mask_center(kernel):
     dim, *_ = kernel.get_shape().as_list()
     mask = tf.constant(_get_center_mask(dim), dtype=kernel.dtype)
     return kernel * mask
-
-
-# TODO
-class LatentDenseRecon(NonidentityRecon):
-
-    def __init__(self,
-                 activation,
-                 latent_dim,
-                 binarize=None,
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.activation = activation
-        self.latent_dim = latent_dim
-        self.binarize = softly(binarize) if binarize is not None else None
-
-    def build(self, input_shape):
-        depth = input_shape[-1]
-        self.kernel = self.add_weight(
-            name='kernel',
-            shape=[depth, self.latent_dim],
-            initializer="glorot_uniform",
-            trainable=True)
-        super().build(input_shape)
-
-    def call(self, x):
-        W = self.kernel
-        z = x @ W
-        if self.activation is not None:
-            z = self.activation(z)
-        if self.binarize is not None:
-            z = self.binarize(z)
-        y = z @ tf.transpose(W)
-        if self.binarize is not None:
-            y = self.binarize(y)
-        return y
