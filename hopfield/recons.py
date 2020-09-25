@@ -22,11 +22,15 @@ class DenseRecon(NonidentityRecon):
 
     Parameters
     ----------
-    activation : callable, optional
+    activation : callable
+        The activation can be soft, for continuous-state Hopfield networks.
+        Or soften-hard, for discrete-state Hopfield networks. In the later,
+        the softness means that, even though the output is hard, the gradient
+        exists (via custom gradient).
     """
 
     def __init__(self,
-                 activation=soft_sign,
+                 activation,
                  **kwargs):
         super().__init__(**kwargs)
         self.activation = activation
@@ -83,7 +87,12 @@ class ModernDenseRecon(NonidentityRecon):
 
     Parameters
     ----------
-    activation : callable, optional
+    activation : callable
+        The activation can be soft, for continuous-state Hopfield networks.
+        Or soften-hard, for discrete-state Hopfield networks. In the later,
+        the softness means that, even though the output is hard, the gradient
+        exists (via custom gradient). However, discrete-state Hopfield networks
+        is suggested for using this re-constructor.
     n : int, optional
         Number of patterns to learn. If `None`, then `memory` shall be
         provided.
@@ -94,7 +103,7 @@ class ModernDenseRecon(NonidentityRecon):
     """
 
     def __init__(self,
-                 activation=soft_sign,
+                 activation,
                  n=None,
                  memory=None,
                  **kwargs):
@@ -148,17 +157,18 @@ class Conv2dRecon(NonidentityRecon):
     ----------
     filters : int
     kernel_size : int
-    activation : callable, optional
-    binarize: callable, optional
-        Binarization method for non-training process. If `None`, then no
-        binarization.
+    activation : callable
+        The activation can be soft, for continuous-state Hopfield networks.
+        Or soften-hard, for discrete-state Hopfield networks. In the later,
+        the softness means that, even though the output is hard, the gradient
+        exists (via custom gradient).
     flatten : bool, optional
     """
 
     def __init__(self,
                  filters,
                  kernel_size,
-                 activation=soft_sign,
+                 activation,
                  flatten=False,
                  **kwargs):
         super().__init__(**kwargs)
@@ -213,3 +223,73 @@ def mask_center(kernel):
     dim, *_ = kernel.get_shape().as_list()
     mask = tf.constant(_get_center_mask(dim), dtype=kernel.dtype)
     return kernel * mask
+
+
+class RBMRecon(NonidentityRecon):
+    """Restricted Boltzmann machine (RBM) based non-identity re-constructor.
+
+    RBM -- LDPC -- AE
+
+    Notes
+    -----
+    Non-identity: The latent dimension `latent_dim` shall be smaller the
+        ambient dimension, for ensuring the non-identity of the re-constructor.
+
+    References
+    ----------
+    * Introduction to low-density parity-check (LDPC) code:
+        1. https://medium.com/5g-nr/ldpc-low-density-parity-check-code-8a4444153934
+    * Introduction to Boltzmann machine:
+        2. https://medium.com/edureka/restricted-boltzmann-machine-tutorial-991ae688c154
+    * Relation between Boltzmann machine and auto-encoder:
+        3. https://www.cs.cmu.edu/~rsalakhu/talk_Simons_part2_pdf.pdf
+
+    Parameters
+    ----------
+    latent_dim : int
+    soft_sign : callable, optional
+        The softness means that, even though the output is hard, the gradient
+        exists (via custom gradient).
+    """
+
+    def __init__(self,
+                 latent_dim,
+                 soft_sign=soft_sign,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.latent_dim = latent_dim
+        self.soft_sign = soft_sign
+
+    def get_config(self):
+        config = super().get_config()
+        config['latent_dim'] = self.latent_dim
+        config['soft_sign'] = self.soft_sign
+        return config
+
+    def build(self, input_shape):
+        depth = input_shape[-1]
+        assert depth > self.latent_dim
+
+        self.kernel = self.add_weight(
+            name='kernel',
+            shape=[depth, self.latent_dim],
+            initializer='glorot_uniform',
+            trainable=True)
+        self.latent_bias = self.add_weight(
+            name='latent_bias',
+            shape=[self.latent_dim],
+            initializer='zeros',
+            trainable=True)
+        self.ambient_bias = self.add_weight(
+            name='ambient_bias',
+            shape=[depth],
+            initializer='zeros',
+            trainable=True)
+        super().build(input_shape)
+
+    def call(self, x):
+        f = self.soft_sign
+        W, b, v = self.kernel, self.latent_bias, self.ambient_bias
+        z = f(x @ W + b)
+        y = f(z @ tf.transpose(W) + v)
+        return y
