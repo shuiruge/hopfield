@@ -1,157 +1,78 @@
 import tensorflow as tf
 
 __all__ = (
-    'sign',
+    'soft_step',
+    'soft_sign',
     'tempered',
-    'SoftFunction',
-    'softly',
-    'softly_binarize',
-    'SoftBinarization',
-    'softly_argmax',
 )
 
 
-def sign(x):
-    """Return -1 if x > 0 else 1 element-wisely, with dtype conserved."""
-    y = tf.where(x > 0, 1, -1)
+def step(x, x0, minval, maxval):
+    y = tf.where(x > x0, maxval, minval)
     y = tf.cast(y, x.dtype)
     return y
 
 
-def tempered(T, fn):
+def soft_step(x, x0, minval, maxval, T=1e-0):
+    """Returns maxval if x > x0 else minval, element-wisely. The gradient
+    is replaced by a soft version, with "temperature" T.
+
+    Parameters
+    ----------
+    x : tensor
+    x0 : float or tensor
+    minval : float or tensor
+    maxval : float or tensor
+    T : float, optional
+
+    Returns
+    -------
+    tensor
+    """
+    @tf.custom_gradient
+    def fn(x):
+        z = tf.nn.sigmoid((x - x0) / T)
+
+        def grad_fn(dy):
+            return dy * (maxval - minval) * z * (1 - z) / T
+
+        y = step(x, x0, minval, maxval)
+        return y, grad_fn
+
+    return fn(x)
+
+
+def soft_sign(x):
+    """
+    Parameters
+    ----------
+    x : tensor
+
+    Returns
+    -------
+    tensor
+        The same shape and dtype as x.
+    """
+    return soft_step(x, x0=0, minval=-1, maxval=1)
+
+
+def tempered(T, fn=None):
     """Converts f(x) to f(x/T).
 
     Parameters
     ----------
     T : float
         The temperature.
-    fn : callable
+    fn : callable, optional
+        If `None`, returns a decorator.
 
     Returns
     -------
-    callable
+    callable or decorator
     """
     T = float(T)
-    return lambda x: fn(x / T)
 
+    def decorator(fn):
+        return lambda x: fn(x / T)
 
-class SoftFunction:
-    """Callable with unit Jacobian, or say, identity vector-Jacobian-product.
-
-    Parameters
-    ----------
-    hard_fn : callable
-    """
-
-    def __init__(self, hard_fn):
-        super().__init__()
-        self.hard_fn = hard_fn
-
-    @tf.custom_gradient
-    def __call__(self, *args, **kwargs):
-        y = self.hard_fn(*args, **kwargs)
-        return y, identity
-
-
-def identity(*x):
-    """Identity map. That is, x -> x."""
-    return x[0] if len(x) == 1 else x
-
-
-def softly(fn):
-    r"""Decorator that returns func(*x, **kwargs), with the gradients on the x
-    :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an unit Jacobian,
-    or say, an identity vector-Jacobian-product.
-    """
-    if isinstance(fn, SoftFunction):
-        return fn
-    return SoftFunction(fn)
-
-
-def softly_binarize(x, threshold, minval=0, maxval=1, from_logits=False):
-    r"""Returns `maxval` if x > threshold else `minval`, element-wisely, with
-    the gradients :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an
-    unit Jacobian.
-
-    Parameters
-    ----------
-    x : tensor
-    threshold : float
-    minval : real number
-    maxval : real number
-    from_logits : bool, optional
-        If true, then softly binarize sigmoid(x) instead of x.
-
-    Returns
-    -------
-    tensor
-        The same shape and dtype as x.
-    """
-
-    @softly
-    def binarize(x):
-        y = tf.where(x > threshold, maxval, minval)
-        y = tf.cast(y, x.dtype)
-        return y
-
-    return binarize(tf.nn.sigmoid(x)) if from_logits else binarize(x)
-
-
-class SoftBinarization(tf.keras.layers.Layer):
-    """For using in tf.keras.Sequential.
-
-    If in training phase, then do nothing. Otherwise, make soft binarization.
-
-    Parameters
-    ----------
-    threshold : float
-    from_logits : bool, optional
-        If true, then softly binarize sigmoid(x) instead of x.
-    """
-
-    def __init__(self, threshold, from_logits=False, **kwargs):
-        super().__init__(**kwargs)
-        self.threshold = threshold
-        self.from_logits = from_logits
-
-    def get_config(self):
-        config = super().get_config()
-        config['threshold'] = self.threshold
-        config['from_logits'] = self.from_logits
-        return config
-
-    def call(self, x, training=None):
-        if self.from_logits:
-            x = tf.nn.sigmoid(x)
-        if training:
-            return x
-        return softly_binarize(x, self.threshold)
-
-
-# TODO: test this function.
-def softly_argmax(x, axis, from_logits=False):
-    r"""Returns 1 if the element x[..., i, ...] == max(x[..., i, ...]), along
-    axis i, with the gradients
-    :math:`\partial f_i / \partial x_j = \delta_{i j}`, i.e. an unit Jacobian.
-
-    Parameters
-    ----------
-    x : tensor
-    axis : int
-    from_logits : bool, optional
-        If true, then softly argmax softmax(x) instead of x.
-
-    Returns
-    -------
-    tensor
-        The same shape and dtype as x.
-    """
-
-    @softly
-    def argmax(x):
-        max_x = tf.reduce_max(x, axis=axis, keepdims=True)
-        y = tf.where(x == max_x, 1, 0)
-        y = tf.cast(y, x.dtype)
-        return y
-
-    return argmax(tf.nn.softmax(x)) if from_logits else argmax(x)
+    return decorator if fn is None else decorator(fn)

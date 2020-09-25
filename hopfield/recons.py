@@ -2,6 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
+from .utils import soft_sign
 
 __all__ = (
     'NonidentityRecon',
@@ -21,19 +22,19 @@ class DenseRecon(NonidentityRecon):
 
     Parameters
     ----------
-    activation : callable
-    binarize: callable, optional
-        Binarization method for non-training process. If `None`, then no
-        binarization.
+    activation : callable, optional
     """
 
     def __init__(self,
-                 activation,
-                 binarize=None,
+                 activation=soft_sign,
                  **kwargs):
         super().__init__(**kwargs)
         self.activation = activation
-        self.binarize = binarize
+
+    def get_config(self):
+        config = super().get_config()
+        config['activation'] = self.activation
+        return config
 
     def build(self, input_shape):
         depth = input_shape[-1]
@@ -50,14 +51,10 @@ class DenseRecon(NonidentityRecon):
             trainable=True)
         super().build(input_shape)
 
-    def call(self, x, training=None):
+    def call(self, x):
+        f = self.activation
         W, b = self.kernel, self.bias
-        y = x @ W + b
-        if self.activation is not None:
-            y = self.activation(y)
-        if not training and self.binarize is not None:
-            y = self.binarize(y)
-        return y
+        return f(x @ W + b)
 
 
 def symmetrize_and_mask_diagonal(kernel):
@@ -86,10 +83,7 @@ class ModernDenseRecon(NonidentityRecon):
 
     Parameters
     ----------
-    activation : callable
-    binarize: callable, optional
-        Binarization method for non-training process. If `None`, then no
-        binarization.
+    activation : callable, optional
     n : int, optional
         Number of patterns to learn. If `None`, then `memory` shall be
         provided.
@@ -100,8 +94,7 @@ class ModernDenseRecon(NonidentityRecon):
     """
 
     def __init__(self,
-                 activation,
-                 binarize=None,
+                 activation=soft_sign,
                  n=None,
                  memory=None,
                  **kwargs):
@@ -111,9 +104,15 @@ class ModernDenseRecon(NonidentityRecon):
             raise ValueError('Either `n` or `memory` has to be provided.')
 
         self.activation = activation
-        self.binarize = binarize
         self.n = n
         self.memory = memory
+
+    def get_config(self):
+        config = super().get_config()
+        config['activation'] = self.activation
+        config['n'] = self.n
+        config['memory'] = self.memory
+        return config
 
     def build(self, input_shape):
         depth = input_shape[-1]
@@ -132,18 +131,10 @@ class ModernDenseRecon(NonidentityRecon):
                                       trainable=True)
         super().build(input_shape)
 
-    def _recon(self, x):
+    def call(self, x):
         f = self.activation
         W = self.kernel
         return f(x @ tf.transpose(W)) @ W
-
-    def call(self, x, training=None):
-        y = self._recon(x)
-        if training:
-            return y
-        if self.binarize is not None:
-            y = self.binarize(y)
-        return y
 
 
 class Conv2dRecon(NonidentityRecon):
@@ -157,7 +148,7 @@ class Conv2dRecon(NonidentityRecon):
     ----------
     filters : int
     kernel_size : int
-    activation : callable
+    activation : callable, optional
     binarize: callable, optional
         Binarization method for non-training process. If `None`, then no
         binarization.
@@ -167,16 +158,22 @@ class Conv2dRecon(NonidentityRecon):
     def __init__(self,
                  filters,
                  kernel_size,
-                 activation,
-                 binarize=None,
+                 activation=soft_sign,
                  flatten=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.filters = int(filters)
         self.kernel_size = int(kernel_size)
         self.activation = activation
-        self.binarize = binarize
         self.flatten = flatten
+
+    def get_config(self):
+        config = super().get_config()
+        config['filters'] = self.filters
+        config['kernel_size'] = self.kernel_size
+        config['activation'] = self.activation
+        config['flatten'] = self.flatten
+        return config
 
     def build(self, input_shape):
         recon_layers = [
@@ -199,13 +196,8 @@ class Conv2dRecon(NonidentityRecon):
 
         super().build(input_shape)
 
-    def call(self, x, training=None):
-        y = self._recon(x)
-        if training:
-            return y
-        if self.binarize is not None:
-            y = self.binarize(y)
-        return y
+    def call(self, x):
+        return self._recon(x)
 
 
 def _get_center_mask(dim: int) -> np.array:
