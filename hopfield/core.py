@@ -1,4 +1,5 @@
 import tensorflow as tf
+from .recons import get_recon_loss
 
 __all__ = (
     'DiscreteTimeHopfieldLayer',
@@ -53,7 +54,7 @@ class DiscreteTimeHopfieldLayer(tf.keras.layers.Layer):
 
     def _learn(self, x):
         r = self.non_identity_recon(x, training=True)
-        loss = tf.reduce_mean(tf.abs(x - r))
+        loss = get_recon_loss(self.non_identity_recon, x, r)
         return r, loss
 
     def _update(self, x):

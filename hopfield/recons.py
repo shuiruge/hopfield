@@ -6,6 +6,7 @@ from .utils import soft_sign
 
 __all__ = (
     'NonidentityRecon',
+    'get_recon_loss',
     'DenseRecon',
     'ModernDenseRecon',
     'Conv2dRecon',
@@ -14,7 +15,35 @@ __all__ = (
 
 class NonidentityRecon(tf.keras.layers.Layer):
     """Base class of re-constructor which is further constrainted
-    to avoid learning to be an identity map."""
+    to avoid learning to be an identity map.
+
+    This class provides a method for computing the re-construction loass
+    `get_recon_loss`, mapping the input tensor and re-constructed tensor
+    to a scalar. Defaults to MAE. You can override this method for your
+    need.
+    """
+
+    @staticmethod
+    def get_recon_loss(x, recon_x):
+        return tf.reduce_mean(tf.abs(x - recon_x))
+
+
+def get_recon_loss(non_identity_recon, x, recon_x):
+    """Returns the re-construction loss defined by the non-identity re-
+    constructor `non_identity_recon`, with input `x` and the re-constructed
+    `recon_x`.
+
+    Parameters
+    ----------
+    non_identity_recon : NonidentityRecon
+    x : tensor
+    recon_x : tensor
+
+    Returns
+    -------
+    scalar
+    """
+    return non_identity_recon.get_recon_loss(x, recon_x)
 
 
 class DenseRecon(NonidentityRecon):
