@@ -86,6 +86,59 @@
     <math|<with|math-font|cal|E>> is lower bounded.
   </proof>
 
+  <subsubsection|Learning Rule>
+
+  Let <math|<around*|(|W,b|)>> a discrete-time Hopfield network. And
+  <math|D\<assign\><around*|{|x<rsub|n>\|x<rsub|n>\<in\><around*|{|-1,+1|}><rsup|d>,n=1,\<ldots\>,N|}>>
+  a dataset<\footnote>
+    We use Greek alphabet for component in <math|\<bbb-R\><rsup|d>> and
+    Lattin alphabet for element in dataset.
+  </footnote>. We can train the Hopfield nework by seeking a proper
+  parameters <math|<around*|(|W,b|)>>, s.t. its stable points cover the
+  dataset as much as possible, by<\footnote>
+    This algorithm generalizes the algorithm 42.9 of Mackay.
+  </footnote>
+
+  <\algorithm>
+    <\python-code>
+      W, b = init_W, init_b \ # e.g. by Glorot initializer
+
+      for step in range(max_step):
+
+      \ \ \ \ for x in dataset:
+
+      \ \ \ \ \ \ \ \ y = softsign(W @ x + b)
+
+      \ \ \ \ \ \ \ \ loss = norm(x - y)
+
+      \ \ \ \ \ \ \ \ optimizer.minimize(objective=loss, variables=(W, b))
+
+      \ \ \ \ \ \ \ \ W = set_zero_diag(symmetrize(W))
+
+      \;
+
+      @custom_gradient
+
+      def softsign(x, T=1e-0):
+
+      \ \ \ \ y = sign(x)
+
+      \ \ \ \ grad_fn = lambda x: (1 - tanh(x)) ** 2 / T
+
+      \ \ \ \ return y, grad_fn
+    </python-code>
+  </algorithm>
+
+  <\remark>
+    In this algorithm, we use a specially designed <math|softsign> function
+    instead of using <math|tanh>. The reason is that the output <math|y> is
+    binary in this case, which then ceasing the difficulty of learning.
+    Indeed, when <math|x=1>, <math|y=1> using <math|softsign> is much simpler
+    than <math|y=0.1> using <math|tanh>, reflected in the loss. This improves
+    the capacity of re-construction with the same capacity of network.
+    Numerical experiments confirm this remark.
+  </remark>
+
   <subsection|Continuous-time Hopfield Network>
 
   <subsubsection|Definition>
@@ -474,31 +527,35 @@
 
 <\references>
   <\collection>
-    <associate|Boltzmann machine|<tuple|16|?>>
     <associate|Boltzmann machine and low-density parity-check
-    decoder|<tuple|16|?>>
+    decoder|<tuple|17|?>>
     <associate|Hopfield networks is All You Need|<tuple|2|?>>
     <associate|On autoencoder scoring|<tuple|1|?>>
     <associate|auto-1|<tuple|1|1>>
-    <associate|auto-10|<tuple|1.2.5|?>>
-    <associate|auto-11|<tuple|2|?>>
-    <associate|auto-12|<tuple|2.1|?>>
-    <associate|auto-13|<tuple|2.2|?>>
-    <associate|auto-14|<tuple|2.3|?>>
-    <associate|auto-15|<tuple|3|?>>
+    <associate|auto-10|<tuple|1.2.4|?>>
+    <associate|auto-11|<tuple|1.2.5|?>>
+    <associate|auto-12|<tuple|2|?>>
+    <associate|auto-13|<tuple|2.1|?>>
+    <associate|auto-14|<tuple|2.2|?>>
+    <associate|auto-15|<tuple|2.3|?>>
+    <associate|auto-16|<tuple|3|?>>
     <associate|auto-2|<tuple|1.1|2>>
     <associate|auto-3|<tuple|1.1.1|2>>
     <associate|auto-4|<tuple|1.1.2|2>>
-    <associate|auto-5|<tuple|1.2|3>>
-    <associate|auto-6|<tuple|1.2.1|?>>
-    <associate|auto-7|<tuple|1.2.2|?>>
-    <associate|auto-8|<tuple|1.2.3|?>>
-    <associate|auto-9|<tuple|1.2.4|?>>
-    <associate|example: softmax|<tuple|14|?>>
+    <associate|auto-5|<tuple|1.1.3|3>>
+    <associate|auto-6|<tuple|1.2|?>>
+    <associate|auto-7|<tuple|1.2.1|?>>
+    <associate|auto-8|<tuple|1.2.2|?>>
+    <associate|auto-9|<tuple|1.2.3|?>>
+    <associate|example: softmax|<tuple|15|?>>
     <associate|footnote-1|<tuple|1|?>>
     <associate|footnote-2|<tuple|2|?>>
+    <associate|footnote-3|<tuple|3|?>>
+    <associate|footnote-4|<tuple|4|?>>
     <associate|footnr-1|<tuple|1|?>>
     <associate|footnr-2|<tuple|2|?>>
+    <associate|footnr-3|<tuple|3|?>>
+    <associate|footnr-4|<tuple|4|?>>
   </collection>
 </references>
 
@@ -557,9 +614,14 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-13>>
 
+      <with|par-left|<quote|1tab>|2.3<space|2spc>Relation to Restricted
+      Boltzmann Machine and Low-Density Parity-Check Code
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-14>>
+
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|3<space|2spc>References>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-14><vspace|0.5fn>
+      <no-break><pageref|auto-15><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
