@@ -96,7 +96,7 @@
   </footnote>. We can train the Hopfield nework by seeking a proper
   parameters <math|<around*|(|W,b|)>>, s.t. its stable points cover the
   dataset as much as possible, by<\footnote>
-    This algorithm generalizes the algorithm 42.9 of Mackay.
+    This algorithm is the algorithm 42.9 of Mackay.
   </footnote>
 
   <\algorithm>
@@ -107,37 +107,15 @@
 
       \ \ \ \ for x in dataset:
 
-      \ \ \ \ \ \ \ \ y = softsign(W @ x + b)
+      \ \ \ \ \ \ \ \ y = f(W @ x + b)
 
       \ \ \ \ \ \ \ \ loss = norm(x - y)
 
       \ \ \ \ \ \ \ \ optimizer.minimize(objective=loss, variables=(W, b))
 
       \ \ \ \ \ \ \ \ W = set_zero_diag(symmetrize(W))
-
-      \;
-
-      @custom_gradient
-
-      def softsign(x, T=1e-0):
-
-      \ \ \ \ y = sign(x)
-
-      \ \ \ \ grad_fn = lambda x: (1 - tanh(x)) ** 2 / T
-
-      \ \ \ \ return y, grad_fn
     </python-code>
   </algorithm>
-
-  <\remark>
-    In this algorithm, we use a specially designed <math|softsign> function
-    instead of using <math|tanh>. The reason is that the output <math|y> is
-    binary in this case, which then ceasing the difficulty of learning.
-    Indeed, when <math|x=1>, <math|y=1> using <math|softsign> is much simpler
-    than <math|y=0.1> using <math|tanh>, reflected in the loss. This improves
-    the capacity of re-construction with the same capacity of network.
-    Numerical experiments confirm this remark.
-  </remark>
 
   <subsection|Continuous-time Hopfield Network>
 
@@ -249,10 +227,7 @@
   <\corollary>
     Let <math|<around*|(|W,b;\<tau\>,f|)>> a continous-time Hopfield network.
     And <math|D\<assign\><around*|{|x<rsub|n>\|x<rsub|n>\<in\>\<bbb-R\><rsup|d>,n=1,\<ldots\>,N|}>>
-    a dataset<\footnote>
-      We use Greek alphabet for component in <math|\<bbb-R\><rsup|d>> and
-      Lattin alphabet for element in dataset.
-    </footnote>. If add constraint <math|W<rsub|\<alpha\>\<alpha\>>=0> for
+    a dataset. If add constraint <math|W<rsub|\<alpha\>\<alpha\>>=0> for
     <math|\<forall\>\<alpha\>>, then we can train the Hopfield nework by
     seeking a proper parameters <math|<around*|(|W,b|)>>, s.t. its stable
     points cover the dataset as much as possible, by<\footnote>
@@ -473,8 +448,8 @@
   Parity-Check Code>
 
   <\definition>
-    <label|Boltzmann machine and low-density parity-check decoder>[Boltzmann
-    Machine & Low-Density Parity-Check Decoder] Let
+    <label|Boltzmann machine and low-density parity-check decoder>[Ristricted
+    Boltzmann Machine & Low-Density Parity-Check Decoder] Let
     <math|W\<in\>\<bbb-R\><rsup|L>\<times\>\<bbb-R\><rsup|A>>, with
     <math|L\<less\>A>, <math|b\<in\>\<bbb-R\><rsup|A>>, and
     <math|v\<in\>\<bbb-R\><rsup|L>>. For <math|\<forall\>x\<in\><around*|{|-1,+1|}><rsup|A>>,
@@ -484,13 +459,14 @@
       <tformat|<table|<row|<cell|z<rsub|t+1>>|<cell|=sign<around*|[|W\<cdot\>x<rsub|t>+b|]>;>>|<row|<cell|x<rsub|t+1>>|<cell|=sign<around*|[|W<rsup|T>\<cdot\>z<rsub|t+1>+v|]>.>>>>
     </align>
 
-    We call <math|<around*|(|W,b,v|)>> with this updation rule a Boltzmann
-    machine (or low-density parity-check decoder).
+    We call <math|<around*|(|W,b,v|)>> with this updation rule a ristricted
+    Boltzmann machine (or low-density parity-check decoder).
   </definition>
 
   <\theorem>
-    Boltzmann machine is a special case of discrete-time Hopfield network.
-    This, thus, ensures the convergence of Boltzmann machine.
+    Restricted Boltzmann machine is a special case of discrete-time Hopfield
+    network. This, thus, ensures the convergence of restricted Boltzmann
+    machine.
   </theorem>
 
   <\proof>
@@ -511,6 +487,56 @@
     updates the first <math|L> components at each step of updation.
   </proof>
 
+  <subsubsection|Learning Rule>
+
+  Let <math|<around*|(|W,b,v|)>> a restricted Boltzmann machine. And
+  <math|D\<assign\><around*|{|x<rsub|n>\|x<rsub|n>\<in\><around*|{|-1,+1|}><rsup|d>,n=1,\<ldots\>,N|}>>
+  a dataset. We can train the restricted Boltzmann machine by seeking a
+  proper parameters <math|<around*|(|W,b|)>>, s.t. its stable points cover
+  the dataset as much as possible, by<\footnote>
+    This algorithm generalizes the algorithm 42.9 of Mackay.
+  </footnote>
+
+  <\algorithm>
+    <\python-code>
+      W, b, v = init_W, init_b, init_v \ # e.g. by Glorot initializer
+
+      for step in range(max_step):
+
+      \ \ \ \ for x in dataset:
+
+      \ \ \ \ \ \ \ \ next_z = softsign(W @ x + b)
+
+      \ \ \ \ \ \ \ \ next_x = softsign(transpose(W) @ next_z + v)
+
+      \ \ \ \ \ \ \ \ loss = norm(x - next_x)
+
+      \ \ \ \ \ \ \ \ optimizer.minimize(objective=loss, variables=(W, b, v))
+
+      \;
+
+      @custom_gradient
+
+      def softsign(x, T=1e-0):
+
+      \ \ \ \ y = sign(x)
+
+      \ \ \ \ grad_fn = lambda x: (1 - tanh(x)) ** 2 / T
+
+      \ \ \ \ return y, grad_fn
+    </python-code>
+  </algorithm>
+
+  <\remark>
+    In this algorithm, we use a specially designed <math|softsign> function
+    instead of using <math|tanh>. The reason is that the output <math|y> is
+    binary in this case, which then ceasing the difficulty of learning.
+    Indeed, when <math|x=1>, <math|y=1> using <math|softsign> is much simpler
+    than <math|y=0.1> using <math|tanh>, reflected in the loss. This improves
+    the capacity of re-construction with the same capacity of network.
+    Numerical experiments confirm this remark.
+  </remark>
+
   <section|References>
 
   <\enumerate-numeric>
@@ -519,6 +545,9 @@
 
     <item><label|Hopfield networks is All You Need> <hlink|Hopfield networks
     is All You Need|https://arxiv.org/abs/2008.02217>.
+
+    <item><label|Information Theory, Inference, and Learning Algorithms>
+    Information Theory, Inference, and Learning Algorithms, D. Mackay.
   </enumerate-numeric>
 </body>
 
@@ -528,8 +557,10 @@
 <\references>
   <\collection>
     <associate|Boltzmann machine and low-density parity-check
-    decoder|<tuple|17|?>>
+    decoder|<tuple|16|?>>
     <associate|Hopfield networks is All You Need|<tuple|2|?>>
+    <associate|Information Theory, Inference, and Learning
+    Algorithms|<tuple|3|?>>
     <associate|On autoencoder scoring|<tuple|1|?>>
     <associate|auto-1|<tuple|1|1>>
     <associate|auto-10|<tuple|1.2.4|?>>
@@ -538,7 +569,9 @@
     <associate|auto-13|<tuple|2.1|?>>
     <associate|auto-14|<tuple|2.2|?>>
     <associate|auto-15|<tuple|2.3|?>>
-    <associate|auto-16|<tuple|3|?>>
+    <associate|auto-16|<tuple|2.3.1|?>>
+    <associate|auto-17|<tuple|3|?>>
+    <associate|auto-18|<tuple|3|?>>
     <associate|auto-2|<tuple|1.1|2>>
     <associate|auto-3|<tuple|1.1.1|2>>
     <associate|auto-4|<tuple|1.1.2|2>>
@@ -547,15 +580,23 @@
     <associate|auto-7|<tuple|1.2.1|?>>
     <associate|auto-8|<tuple|1.2.2|?>>
     <associate|auto-9|<tuple|1.2.3|?>>
-    <associate|example: softmax|<tuple|15|?>>
+    <associate|example: softmax|<tuple|14|?>>
     <associate|footnote-1|<tuple|1|?>>
     <associate|footnote-2|<tuple|2|?>>
     <associate|footnote-3|<tuple|3|?>>
     <associate|footnote-4|<tuple|4|?>>
+    <associate|footnote-5|<tuple|5|?>>
+    <associate|footnote-6|<tuple|6|?>>
+    <associate|footnote-7|<tuple|7|?>>
+    <associate|footnote-8|<tuple|8|?>>
     <associate|footnr-1|<tuple|1|?>>
     <associate|footnr-2|<tuple|2|?>>
     <associate|footnr-3|<tuple|3|?>>
     <associate|footnr-4|<tuple|4|?>>
+    <associate|footnr-5|<tuple|5|?>>
+    <associate|footnr-6|<tuple|6|?>>
+    <associate|footnr-7|<tuple|7|?>>
+    <associate|footnr-8|<tuple|8|?>>
   </collection>
 </references>
 
@@ -578,50 +619,54 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-4>>
 
+      <with|par-left|<quote|2tab>|1.1.3<space|2spc>Learning Rule
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-5>>
+
       <with|par-left|<quote|1tab>|1.2<space|2spc>Continuous-time Hopfield
       Network <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-5>>
+      <no-break><pageref|auto-6>>
 
       <with|par-left|<quote|2tab>|1.2.1<space|2spc>Definition
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-6>>
+      <no-break><pageref|auto-7>>
 
       <with|par-left|<quote|2tab>|1.2.2<space|2spc>Convergence
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-7>>
+      <no-break><pageref|auto-8>>
 
       <with|par-left|<quote|2tab>|1.2.3<space|2spc>Learning Rule
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-8>>
+      <no-break><pageref|auto-9>>
 
       <with|par-left|<quote|2tab>|1.2.4<space|2spc>Relation to Auto-encoder
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-9>>
+      <no-break><pageref|auto-10>>
 
       <with|par-left|<quote|2tab>|1.2.5<space|2spc>Stability of Fixed Points
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-10>>
+      <no-break><pageref|auto-11>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|2<space|2spc>Variations>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-11><vspace|0.5fn>
+      <no-break><pageref|auto-12><vspace|0.5fn>
 
       <with|par-left|<quote|1tab>|2.1<space|2spc>Dense Associative Memories
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-12>>
+      <no-break><pageref|auto-13>>
 
       <with|par-left|<quote|1tab>|2.2<space|2spc>Cellular Automa
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-13>>
+      <no-break><pageref|auto-14>>
 
       <with|par-left|<quote|1tab>|2.3<space|2spc>Relation to Restricted
       Boltzmann Machine and Low-Density Parity-Check Code
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-14>>
+      <no-break><pageref|auto-15>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|3<space|2spc>References>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-15><vspace|0.5fn>
+      <no-break><pageref|auto-16><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
