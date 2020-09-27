@@ -2,9 +2,9 @@ import tensorflow as tf
 
 __all__ = (
     'step',
-    'soft_step',
-    'soft_sign',
-    'soft_binary',
+    'softstep',
+    'softsign',
+    'softbinary',
     'tempered',
 )
 
@@ -28,7 +28,7 @@ def step(x, threshold, minval, maxval):
     return y
 
 
-def soft_step(x, threshold, minval, maxval, T):
+def softstep(x, threshold, minval, maxval, T):
     """Returns maxval if x > threshold else minval, element-wisely.
     The gradient is replaced by a soft version, with "temperature" T.
 
@@ -58,7 +58,7 @@ def soft_step(x, threshold, minval, maxval, T):
     return fn(x)
 
 
-def soft_sign(x, T=1e-0):
+def softsign(x, T=1e-0):
     """
     Parameters
     ----------
@@ -70,10 +70,10 @@ def soft_sign(x, T=1e-0):
     tensor
         The same shape and dtype as x.
     """
-    return soft_step(x, threshold=0, minval=-1, maxval=1, T=T)
+    return softstep(x, threshold=0, minval=-1, maxval=1, T=T)
 
 
-def soft_binary(x, T=1e-0):
+def softbinary(x, T=1e-0):
     """
     Parameters
     ----------
@@ -85,7 +85,7 @@ def soft_binary(x, T=1e-0):
     tensor
         The same shape and dtype as x.
     """
-    return soft_step(x, threshold=0, minval=0, maxval=1, T=T)
+    return softstep(x, threshold=0, minval=0, maxval=1, T=T)
 
 
 def tempered(T, fn=None):

@@ -2,7 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
-from .utils import soft_sign, step
+from .utils import softsign, step
 
 __all__ = (
     'NonidentityRecon',
@@ -53,7 +53,7 @@ def sign(x):
     return tf.cast(y, x.dtype)
 
 
-# XXX: Using `soft_sign` as activation will not gain the promised properties
+# XXX: Using `softsign` as activation will not gain the promised properties
 #      of Hopfield network, but using tanh with sign binarization re-gains.
 #      This is not consistent with the discussion in `RMBRecon`.
 class DenseRecon(NonidentityRecon):
@@ -212,7 +212,7 @@ class Conv2dRecon(NonidentityRecon):
     def __init__(self,
                  filters,
                  kernel_size,
-                 activation=soft_sign,
+                 activation=softsign,
                  flatten=False,
                  **kwargs):
         super().__init__(**kwargs)
@@ -282,32 +282,32 @@ class RBMRecon(NonidentityRecon):
     References
     ----------
     * Introduction to low-density parity-check (LDPC) code:
-        1. https://medium.com/5g-nr/ldpc-low-density-parity-check-code-8a4444153934
+        1. https://medium.com/5g-nr/ldpc-low-density-parity-check-code-8a4444153934  # noqa:E501
     * Introduction to Boltzmann machine:
-        2. https://medium.com/edureka/restricted-boltzmann-machine-tutorial-991ae688c154
+        2. https://medium.com/edureka/restricted-boltzmann-machine-tutorial-991ae688c154  # noqa:E501
     * Relation between Boltzmann machine and auto-encoder:
         3. https://www.cs.cmu.edu/~rsalakhu/talk_Simons_part2_pdf.pdf
 
     Parameters
     ----------
     latent_dim : int
-    soft_sign : callable, optional
+    softsign : callable, optional
         The softness means that, even though the output is hard, the gradient
         exists (via custom gradient).
     """
 
     def __init__(self,
                  latent_dim,
-                 soft_sign=soft_sign,
+                 softsign=softsign,
                  **kwargs):
         super().__init__(**kwargs)
         self.latent_dim = latent_dim
-        self.soft_sign = soft_sign
+        self.softsign = softsign
 
     def get_config(self):
         config = super().get_config()
         config['latent_dim'] = self.latent_dim
-        config['soft_sign'] = self.soft_sign
+        config['softsign'] = self.softsign
         return config
 
     def build(self, input_shape):
@@ -332,7 +332,7 @@ class RBMRecon(NonidentityRecon):
         super().build(input_shape)
 
     def call(self, x, training=None):
-        f = self.soft_sign
+        f = self.softsign
         W, b, v = self.kernel, self.latent_bias, self.ambient_bias
         z = f(x @ W + b)
         y = f(z @ tf.transpose(W) + v)
@@ -349,7 +349,7 @@ class HebbianRBMRecon(NonidentityRecon):
     def get_config(self):
         config = super().get_config()
         config['latent_dim'] = self.latent_dim
-        config['soft_sign'] = self.soft_sign
+        config['softsign'] = self.softsign
         return config
 
     def build(self, input_shape):
