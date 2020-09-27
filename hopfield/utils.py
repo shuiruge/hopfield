@@ -1,26 +1,41 @@
 import tensorflow as tf
 
 __all__ = (
+    'step',
     'soft_step',
     'soft_sign',
+    'soft_binary',
     'tempered',
 )
 
 
-def step(x, x0, minval, maxval):
-    y = tf.where(x > x0, maxval, minval)
-    y = tf.cast(y, x.dtype)
-    return y
-
-
-def soft_step(x, x0, minval, maxval, T=1e-0):
-    """Returns maxval if x > x0 else minval, element-wisely. The gradient
-    is replaced by a soft version, with "temperature" T.
+def step(x, threshold, minval, maxval):
+    """Returns maxval if x > threshold else minval, element-wisely.
 
     Parameters
     ----------
     x : tensor
-    x0 : float or tensor
+    threshold : float or tensor
+    minval : float or tensor
+    maxval : float or tensor
+
+    Returns
+    -------
+    tensor
+    """
+    y = tf.where(x > threshold, maxval, minval)
+    y = tf.cast(y, x.dtype)
+    return y
+
+
+def soft_step(x, threshold, minval, maxval, T):
+    """Returns maxval if x > threshold else minval, element-wisely.
+    The gradient is replaced by a soft version, with "temperature" T.
+
+    Parameters
+    ----------
+    x : tensor
+    threshold : float or tensor
     minval : float or tensor
     maxval : float or tensor
     T : float, optional
@@ -29,31 +44,48 @@ def soft_step(x, x0, minval, maxval, T=1e-0):
     -------
     tensor
     """
+
     @tf.custom_gradient
     def fn(x):
-        z = tf.nn.sigmoid((x - x0) / T)
+        z = tf.nn.sigmoid((x - threshold) / T)
 
         def grad_fn(dy):
             return dy * (maxval - minval) * z * (1 - z) / T
 
-        y = step(x, x0, minval, maxval)
+        y = step(x, threshold, minval, maxval)
         return y, grad_fn
 
     return fn(x)
 
 
-def soft_sign(x):
+def soft_sign(x, T=1e-0):
     """
     Parameters
     ----------
     x : tensor
+    T : float, optional
 
     Returns
     -------
     tensor
         The same shape and dtype as x.
     """
-    return soft_step(x, x0=0, minval=-1, maxval=1)
+    return soft_step(x, threshold=0, minval=-1, maxval=1, T=T)
+
+
+def soft_binary(x, T=1e-0):
+    """
+    Parameters
+    ----------
+    x : tensor
+    T : float, optional
+
+    Returns
+    -------
+    tensor
+        The same shape and dtype as x.
+    """
+    return soft_step(x, threshold=0, minval=0, maxval=1, T=T)
 
 
 def tempered(T, fn=None):

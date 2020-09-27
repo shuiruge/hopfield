@@ -2,7 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
-from .utils import soft_sign
+from .utils import soft_sign, step
 
 __all__ = (
     'NonidentityRecon',
@@ -10,6 +10,8 @@ __all__ = (
     'DenseRecon',
     'ModernDenseRecon',
     'Conv2dRecon',
+    'RBMRecon',
+    'HebbianRBMRecon',
 )
 
 
@@ -46,6 +48,14 @@ def get_recon_loss(non_identity_recon, x, recon_x):
     return non_identity_recon.get_recon_loss(x, recon_x)
 
 
+def sign(x):
+    y = tf.where(x > 0.5, 1, -1)
+    return tf.cast(y, x.dtype)
+
+
+# XXX: Using `soft_sign` as activation will not gain the promised properties
+#      of Hopfield network, but using tanh with sign binarization re-gains.
+#      This is not consistent with the discussion in `RMBRecon`.
 class DenseRecon(NonidentityRecon):
     """Fully connected non-identity re-constructor.
 
@@ -59,10 +69,12 @@ class DenseRecon(NonidentityRecon):
     """
 
     def __init__(self,
-                 activation,
+                 activation=tf.math.tanh,
+                 binarize=sign,
                  **kwargs):
         super().__init__(**kwargs)
         self.activation = activation
+        self.binarize = binarize
 
     def get_config(self):
         config = super().get_config()
@@ -84,10 +96,13 @@ class DenseRecon(NonidentityRecon):
             trainable=True)
         super().build(input_shape)
 
-    def call(self, x):
+    def call(self, x, training=None):
         f = self.activation
         W, b = self.kernel, self.bias
-        return f(x @ W + b)
+        y = f(x @ W + b)
+        if not training:
+            y = self.binarize(y)
+        return y
 
 
 def symmetrize_and_mask_diagonal(kernel):
@@ -197,7 +212,7 @@ class Conv2dRecon(NonidentityRecon):
     def __init__(self,
                  filters,
                  kernel_size,
-                 activation,
+                 activation=soft_sign,
                  flatten=False,
                  **kwargs):
         super().__init__(**kwargs)
@@ -316,9 +331,79 @@ class RBMRecon(NonidentityRecon):
             trainable=True)
         super().build(input_shape)
 
-    def call(self, x):
+    def call(self, x, training=None):
         f = self.soft_sign
         W, b, v = self.kernel, self.latent_bias, self.ambient_bias
         z = f(x @ W + b)
         y = f(z @ tf.transpose(W) + v)
         return y
+
+
+# TODO
+class HebbianRBMRecon(NonidentityRecon):
+
+    def __init__(self, latent_dim, **kwargs):
+        super().__init__(**kwargs)
+        self.latent_dim = latent_dim
+
+    def get_config(self):
+        config = super().get_config()
+        config['latent_dim'] = self.latent_dim
+        config['soft_sign'] = self.soft_sign
+        return config
+
+    def build(self, input_shape):
+        depth = input_shape[-1]
+        assert depth > self.latent_dim
+
+        self.kernel = self.add_weight(
+            name='kernel',
+            shape=[depth, self.latent_dim],
+            initializer=lambda shape, dtype: tf.cast(
+                step(tf.random.uniform(shape), 0.5, 1, -1),
+                dtype),
+            trainable=False)
+        self.latent_bias = self.add_weight(
+            name='latent_bias',
+            shape=[self.latent_dim],
+            initializer='zeros',
+            trainable=False)
+        self.ambient_bias = self.add_weight(
+            name='ambient_bias',
+            shape=[depth],
+            initializer='zeros',
+            trainable=False)
+        super().build(input_shape)
+
+    def call(self, x, training=None):
+
+        def sign(x):
+            return step(x, 0, -1, 1)
+
+        W, b, v = self.kernel, self.latent_bias, self.ambient_bias
+        x1 = x
+        z1 = sign(x1 @ W + b)
+        x2 = sign(z1 @ tf.transpose(W) + v)
+
+        if training:
+
+            def outer_prod(x, y):
+                return x[..., :, tf.newaxis] * y[..., tf.newaxis, :]
+
+            z2 = sign(x2 @ W + b)
+            dW = outer_prod(x1, z1) - outer_prod(x2, z2)
+            dW = tf.reduce_sum(dW, axis=0)
+            self.kernel.assign_add(dW)
+
+            db = tf.reduce_sum(z1 - z2, axis=0)
+            self.latent_bias.assign_add(db)
+
+            dv = tf.reduce_sum(x1 - x2, axis=0)
+            self.ambient_bias.assign_add(dv)
+
+        return x2
+
+    @staticmethod
+    def get_recon_loss(x, recon_x):
+        # re-construction loss is useless, since no SGD to do.
+        return 0.

@@ -38,7 +38,7 @@ def evaluate_autoencoder(model, X):
     X_recon = model.predict(X)
     acc = np.mean(X == X_recon)
     return acc
-    
+
 
 def evaluate(model, X, y=None):
     if isinstance(X, tf.Tensor):
@@ -58,7 +58,7 @@ def load_mnist(image_size, binarize):
     ----------
     image_size : (int, int)
     binarize : bool
-    
+
     Returns
     -------
     (x_train, y_train), (x_test, y_test), all are float32 np.ndarray.
