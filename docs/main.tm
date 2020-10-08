@@ -444,12 +444,10 @@
 
   TODO
 
-  <subsection|Relation to Restricted Boltzmann Machine and Low-Density
-  Parity-Check Code>
+  <subsection|Relation to Restricted Boltzmann Machine>
 
   <\definition>
-    <label|Boltzmann machine and low-density parity-check decoder>[Ristricted
-    Boltzmann Machine & Low-Density Parity-Check Decoder] Let
+    <label|Restricted Boltzmann Machine>[Ristricted Boltzmann Machine] Let
     <math|W\<in\>\<bbb-R\><rsup|L>\<times\>\<bbb-R\><rsup|A>>, with
     <math|L\<less\>A>, <math|b\<in\>\<bbb-R\><rsup|A>>, and
     <math|v\<in\>\<bbb-R\><rsup|L>>. For <math|\<forall\>x\<in\><around*|{|-1,+1|}><rsup|A>>,
@@ -460,7 +458,7 @@
     </align>
 
     We call <math|<around*|(|W,b,v|)>> with this updation rule a ristricted
-    Boltzmann machine (or low-density parity-check decoder).
+    Boltzmann machine.
   </definition>
 
   <\theorem>
@@ -562,6 +560,7 @@
     <associate|Information Theory, Inference, and Learning
     Algorithms|<tuple|3|?>>
     <associate|On autoencoder scoring|<tuple|1|?>>
+    <associate|Restricted Boltzmann Machine|<tuple|16|?>>
     <associate|auto-1|<tuple|1|1>>
     <associate|auto-10|<tuple|1.2.4|?>>
     <associate|auto-11|<tuple|1.2.5|?>>
@@ -571,7 +570,6 @@
     <associate|auto-15|<tuple|2.3|?>>
     <associate|auto-16|<tuple|2.3.1|?>>
     <associate|auto-17|<tuple|3|?>>
-    <associate|auto-18|<tuple|3|?>>
     <associate|auto-2|<tuple|1.1|2>>
     <associate|auto-3|<tuple|1.1.1|2>>
     <associate|auto-4|<tuple|1.1.2|2>>
@@ -585,18 +583,10 @@
     <associate|footnote-2|<tuple|2|?>>
     <associate|footnote-3|<tuple|3|?>>
     <associate|footnote-4|<tuple|4|?>>
-    <associate|footnote-5|<tuple|5|?>>
-    <associate|footnote-6|<tuple|6|?>>
-    <associate|footnote-7|<tuple|7|?>>
-    <associate|footnote-8|<tuple|8|?>>
     <associate|footnr-1|<tuple|1|?>>
     <associate|footnr-2|<tuple|2|?>>
     <associate|footnr-3|<tuple|3|?>>
     <associate|footnr-4|<tuple|4|?>>
-    <associate|footnr-5|<tuple|5|?>>
-    <associate|footnr-6|<tuple|6|?>>
-    <associate|footnr-7|<tuple|7|?>>
-    <associate|footnr-8|<tuple|8|?>>
   </collection>
 </references>
 
@@ -664,9 +654,13 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-15>>
 
+      <with|par-left|<quote|2tab>|2.3.1<space|2spc>Learning Rule
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-16>>
+
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|3<space|2spc>References>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-16><vspace|0.5fn>
+      <no-break><pageref|auto-17><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
