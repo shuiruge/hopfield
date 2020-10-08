@@ -376,34 +376,33 @@ class HebbianRBMRecon(NonidentityRecon):
         super().build(input_shape)
 
     def call(self, x, training=None):
-
-        def sign(x):
-            return step(x, 0, -1, 1)
-
         W, b, v = self.kernel, self.latent_bias, self.ambient_bias
-        x1 = x
-        z1 = sign(x1 @ W + b)
-        x2 = sign(z1 @ tf.transpose(W) + v)
+        z = sign(x @ W + b)
+        new_x = sign(z @ tf.transpose(W) + v)
 
         if training:
-
-            def outer_prod(x, y):
-                return x[..., :, tf.newaxis] * y[..., tf.newaxis, :]
-
-            z2 = sign(x2 @ W + b)
-            dW = outer_prod(x1, z1) - outer_prod(x2, z2)
+            new_z = sign(new_x @ W + b)
+            dW = outer(x, z) - outer(new_x, new_z)
             dW = tf.reduce_sum(dW, axis=0)
             self.kernel.assign_add(dW)
 
-            db = tf.reduce_sum(z1 - z2, axis=0)
+            db = tf.reduce_sum(z - new_z, axis=0)
             self.latent_bias.assign_add(db)
 
-            dv = tf.reduce_sum(x1 - x2, axis=0)
+            dv = tf.reduce_sum(x - new_x, axis=0)
             self.ambient_bias.assign_add(dv)
 
-        return x2
+        return new_x
 
     @staticmethod
     def get_recon_loss(x, recon_x):
         # re-construction loss is useless, since no SGD to do.
         return 0.
+
+
+def sign(x):
+    return step(x, threshold=0, minval=-1, maxval=1)
+
+
+def outer(x, y):
+    return x[..., :, tf.newaxis] * y[..., tf.newaxis, :]
