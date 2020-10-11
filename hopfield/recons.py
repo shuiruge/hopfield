@@ -272,19 +272,23 @@ def mask_center(kernel):
 class RBMRecon(NonidentityRecon):
     """Restricted Boltzmann machine (RBM) based non-identity re-constructor.
 
+    RBM is a kind of Hopfield network, with a block anti-diagonal weight-matrix
+    and async updation.
+
     RBM -- LDPC -- AE
 
     Notes
     -----
-    Non-identity: The latent dimension `latent_dim` shall be smaller the
-        ambient dimension, for ensuring the non-identity of the re-constructor.
+    Non-identity:
+        The latent dimension `latent_dim` shall be smaller the ambient
+        dimension, for ensuring the non-identity of the re-constructor.
 
     References
     ----------
     * Introduction to low-density parity-check (LDPC) code:
-        1. https://medium.com/5g-nr/ldpc-low-density-parity-check-code-8a4444153934  # noqa:E501
+        1. https://medium.com/5g-nr/ldpc-low-density-parity-check-code-8a4444153934
     * Introduction to Boltzmann machine:
-        2. https://medium.com/edureka/restricted-boltzmann-machine-tutorial-991ae688c154  # noqa:E501
+        2. https://medium.com/edureka/restricted-boltzmann-machine-tutorial-991ae688c154
     * Relation between Boltzmann machine and auto-encoder:
         3. https://www.cs.cmu.edu/~rsalakhu/talk_Simons_part2_pdf.pdf
 
@@ -292,22 +296,33 @@ class RBMRecon(NonidentityRecon):
     ----------
     latent_dim : int
     softsign : callable, optional
-        The softness means that, even though the output is hard, the gradient
-        exists (via custom gradient).
+        Soft version of `sign` function. Softness means that the output of the
+        function is hard version, while the gradient is smooth (i.e. custom
+        gradient).
+    T : float, optional
+        The "temperature" characterizing how "soft" the gradient is.
+    use_bias : bool, optional
+        If `False`, then all the biases are set to zeros and non-trainable.
     """
 
     def __init__(self,
                  latent_dim,
                  softsign=softsign,
+                 T=1e-0,
+                 use_bias=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.latent_dim = latent_dim
         self.softsign = softsign
+        self.T = float(T)
+        self.use_bias = use_bias
 
     def get_config(self):
         config = super().get_config()
         config['latent_dim'] = self.latent_dim
         config['softsign'] = self.softsign
+        config['T'] = self.T
+        config['use_bias'] = self.use_bias
         return config
 
     def build(self, input_shape):
@@ -323,17 +338,20 @@ class RBMRecon(NonidentityRecon):
             name='latent_bias',
             shape=[self.latent_dim],
             initializer='zeros',
-            trainable=True)
+            trainable=self.use_bias)
         self.ambient_bias = self.add_weight(
             name='ambient_bias',
             shape=[depth],
             initializer='zeros',
-            trainable=True)
+            trainable=self.use_bias)
         super().build(input_shape)
 
-    def call(self, x, training=None):
-        f = self.softsign
+    def call(self, x):
         W, b, v = self.kernel, self.latent_bias, self.ambient_bias
+
+        def f(x):
+            return self.softsign(x / self.T)
+
         z = f(x @ W + b)
         y = f(z @ tf.transpose(W) + v)
         return y
