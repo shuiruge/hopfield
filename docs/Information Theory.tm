@@ -33,7 +33,7 @@
     typical set of <math|X<rsup|N>> is defined as
 
     <\equation*>
-      T<rsub|N\<delta\>>\<assign\><around*|{|x\<in\>A<rsub|X><rsup|N>:prob<around*|(|<around*|\||<frac|1|N>log<rsub|2><frac|1|prob<around*|(|x|)>>-H<around*|(|X|)>|\|>\<less\>\<delta\>|)>|}>.
+      T<rsub|N\<delta\>>\<assign\><around*|{|x\<in\>A<rsub|X<rsup|N>>:prob<around*|(|<around*|\||<frac|1|N>log<rsub|2><frac|1|prob<around*|(|x|)>>-H<around*|(|X|)>|\|>\<less\>\<delta\>|)>|}>.
     </equation*>
   </definition>
 
@@ -94,18 +94,25 @@
   <subsection|The Source Coding Theorem>
 
   <\theorem>
-    [Source Coding Theorem] Let <math|X> an ensemble. You cannot encode
-    <math|X> s.t. the length of codeword is smaller than
-    <math|H<around*|(|X|)>> without lossing <text-dots>
+    [Source Coding Theorem] Let <math|X> an ensemble. <math|X<rsup|N>> can be
+    compressed into more than <math|NH<around*|(|X|)>> bits with negligible
+    risk of information loss, as <math|N\<rightarrow\>\<infty\>>; conversely
+    if they are compressed into fewer than <math|NH<around*|(|X|)>> bits it
+    is virtually certain that information will be lost.
   </theorem>
 
   <\proof>
-    If <math|N> is large, then almost all message is in the typical set of
-    <math|X<rsup|N>>. There are <math|2<rsup|NH<around*|(|X|)>>> elements in
-    typical set.
+    If <math|N> is large enough, then almost all message is in the typical
+    set of <math|X<rsup|N>>. There are <math|2<rsup|NH<around*|(|X|)>>>
+    elements in typical set, being almost equal probability. Encoding
+    <math|M> equal probability elements needs at least
+    <math|log<rsub|2><around*|(|M|)>> bits, that is <math|NH<around*|(|X|)>>
+    bits.
   </proof>
 
   <subsection|The Noisy-Channel Coding Theorem>
+
+  \;
 </body>
 
 <initial|<\collection>
